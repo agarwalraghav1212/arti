@@ -1,0 +1,57 @@
+pipeline {
+    agent any
+	tools {
+	    maven "3.9.0"
+	 	}
+	stages {
+	    stage('Git CheckOut') {
+		    steps {
+			   git branch: 'main', url: 'https://github.com/icadqa2023/jenkinsauto.git'
+			}
+		}
+        stage('Clean and Install') {
+            steps {
+                bat 'mvn clean install'
+            }
+        }
+        stage ('Package'){
+            steps {
+                bat 'mvn package'
+             }
+        }
+	stage ('Server'){
+            steps {
+               rtServer (
+                 id: "Artifactory",
+                 url: 'http://localhost:8082/artifactory',
+                 username: 'admin',
+                  password: 'YouPasswordHere',
+                  bypassProxy: true,
+                   timeout: 300
+                        )
+            }
+        }
+        stage('Upload'){
+            steps{
+                rtUpload (
+                 serverId:"Artifactory" ,
+                  spec: '''{
+                   "files": [
+                      {
+                      "pattern": "*.war",
+                      "target": "jenkins_auto-libs-snapshot-local"
+                      }
+                            ]
+                           }''',
+                        )
+            }
+        }
+        stage ('Publish build info') {
+            steps {
+                rtPublishBuildInfo (
+                    serverId: "Artifactory"
+                )
+            }
+        }
+    }
+}

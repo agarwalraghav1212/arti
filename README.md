@@ -1,2 +1,2 @@
-# arti
-art
+# JenkinsAutomation
+Codebase for Jenkins automation tutorial
